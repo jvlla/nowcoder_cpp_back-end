@@ -1,34 +1,32 @@
 #include "CommnityUtil.h"
+using namespace std;
 
-Json::Value getAPIJSON(int code, std::string message, Json::Value &data)
+Json::Value getAPIJSON(bool success, std::string message, Json::Value &data)
 {
     Json::Value ret;
 
-    ret["code"] = code;
+    ret["success"] = success;
     ret["message"] = message;
-    ret["data"] = data;
+    // 遍历传入json data，将其中的值放入API json中
+    for (string const &id: data.getMemberNames()) {
+        ret[id] = data.get(id, "");
+    }
+
     return ret;
 }
 
-Json::Value getAPIJSON(int code, std::string message)
+Json::Value getAPIJSON(bool success, std::string message)
 {
     Json::Value ret;
 
-    ret["code"] = code;
+    ret["success"] = success;
     ret["message"] = message;
     return ret;
 }
 
-Json::Value getAPIJSON(int code)
+Json::Value getAPIJSON(bool success)
 {
     Json::Value ret;
-    ret["code"] = code;
+    ret["success"] = success;
     return ret;
-}
-
-drogon::HttpResponsePtr addCORSHeader(drogon::HttpResponsePtr response)
-{
-    response->addHeader("Access-Control-Allow-Origin", "http://localhost:8080");
-    response->addHeader("Access-Control-Allow-Credentials", "true");
-    return response;
 }

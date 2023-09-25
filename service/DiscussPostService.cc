@@ -3,20 +3,17 @@
 #include "../dao/DiscussPostDAO.h"
 using namespace std;
 using namespace drogon_model::nowcoder;
-using namespace dao;
 
-namespace service {
+namespace service::discuss_post {
 
-vector<DiscussPost> find_discuss_post(int userId, int offset, int limit)
+vector<DiscussPost> find_discuss_post(int user_id, int offset, int limit)
 {
-    return select_discuss_post(userId, offset, limit);
+    return dao::discuss_post::select_discuss_post(user_id, offset, limit);
 }
 
 int find_discuss_post_rows(int user_id)
 {
-    return select_discuss_post_rows(user_id);
+    return dao::discuss_post::select_discuss_post_rows(user_id);
 }
 
 }
-
-

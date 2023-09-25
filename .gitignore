@@ -2,7 +2,9 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=intellij+all,visualstudio,visualstudiocode,cmake,c,c++
 
 # 不提交build文件夹内容
-build
+build/*
+!build/.gitkeep
+!build/log/.gitkeep
 
 ### C ###
 # Prerequisites

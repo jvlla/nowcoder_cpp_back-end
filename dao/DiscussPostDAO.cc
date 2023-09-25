@@ -9,7 +9,7 @@ using namespace drogon_model::nowcoder;
 
 Mapper<DiscussPost> get_discuss_post_mapper();
 
-namespace dao {
+namespace dao::discuss_post {
 
 vector<DiscussPost> select_discuss_post(int user_id, int offset, int limit)
 {
@@ -96,17 +96,23 @@ DiscussPost select_discuss_post_by_id(int id)
     }
 }
 
-// 不知道传什么参数，先不弄呢
-// int update_comment_count(int id, int comment_count)
-// {
-//     Mapper<DiscussPost> mapper = get_discuss_post_mapper();
-//     Json::Value
-//     future<DiscussPost> update_future = mapper.updateFutureBy( json()
-//         , Criteria(DiscussPost::Cols::_id, CompareOperator::EQ, id), comment_count);
-
-// }
-
-
+int update_comment_count(int id, int comment_count)
+{
+    Mapper<DiscussPost> mapper = get_discuss_post_mapper();
+    future<size_t> update_future = mapper.updateFutureBy( (Json::Value::Members) {"comment_count"}
+        , Criteria(DiscussPost::Cols::_id, CompareOperator::EQ, id), comment_count);
+    
+    try
+    {
+        size_t count = update_future.get();
+        return (int) count;
+    }
+    catch(const DrogonDbException &e)
+    {
+        LOG_ERROR << "error when call dao::update_comment_count(" << id << ", " << comment_count << "): "<< e.base().what();
+        return -1;
+    }
+}
 
 }
 

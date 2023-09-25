@@ -8,7 +8,7 @@ using namespace drogon_model::nowcoder;
 
 Mapper<User> get_user_mapper();
 
-namespace dao {
+namespace dao::user {
 
 User select_by_id(int id)
 {
@@ -27,8 +27,27 @@ User select_by_id(int id)
     }
 }
 
+User select_by_username(std::string username)
+{
+    Mapper<User> mapper = get_user_mapper();
+    future<vector<User>> select_future = mapper.findFutureBy(Criteria(User::Cols::_username, CompareOperator::EQ, username));
+
+    try
+    {
+        vector<User> users = select_future.get();
+        if (users.size() > 0)
+            return users[0];
+        else
+            return User();
+    }
+    catch(const DrogonDbException &e)
+    {
+        LOG_ERROR << "error when call dao::select_by_username(" << username << "): "<< e.base().what();
+        return User();
+    }
 }
 
+}
 
 Mapper<User> get_user_mapper()
 {
