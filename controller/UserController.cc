@@ -1,34 +1,19 @@
 #include "UserController.h"
+#include <fstream>
 #include <jwt-cpp/jwt.h>
 #include "../service/UserService.h"
+#include "../dao/UserDAO.h"
 #include "../model/User.h"
 #include "../util/CommnityUtil.h"
 using namespace std;
 using namespace drogon_model::nowcoder;
 using namespace trantor;
 
-void UserController::getUser(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback)
+void UserController::get_user(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback)
 {
-    string jwt_cookie = req->getCookie("nowcoder_jwt");
-    int user_id;
+    int user_id = drogon_thread_to_user_id[drogon::app().getCurrentThreadIndex()];
     Json::Value data_JSON, user_JSON;
     HttpResponsePtr response;
-
-    try 
-    {
-        // 验证jwt完整性
-        auto decoded = jwt::decode(jwt_cookie);
-        auto verifier = jwt::verify().allow_algorithm(jwt::algorithm::hs256{JWT_SECRET});
-        verifier.verify(decoded);
-
-        // 查找用户id
-        user_id = stoi(decoded.get_subject());
-    }
-    catch (exception e) 
-    {
-        // 额，不太好找这到底抛了个什么异常，不是提示的jwt::error::signature_verification_exception，全抓住好了
-        LOG_INFO << "jwt验证失败，token: " << jwt_cookie;
-    }
 
     // 生成返回响应
     if (user_id != 0)
@@ -36,7 +21,7 @@ void UserController::getUser(const HttpRequestPtr &req, std::function<void (cons
         User user = service::user::find_user_by_id(user_id);
         user_JSON["userId"] = user_id;
         user_JSON["username"] = user.getValueOfUsername();
-        user_JSON["userHeaderURL"] = "defaultAvatar.jpeg";
+        user_JSON["userHeaderURL"] = "http://" + drogon::app().getListeners()[0].toIpPort() + "/avatar/" + user.getValueOfHeaderUrl();
         data_JSON["user"] = user_JSON;
         response = HttpResponse::newHttpJsonResponse(getAPIJSON(true, "已登录", data_JSON));
     }
@@ -49,5 +34,65 @@ void UserController::getUser(const HttpRequestPtr &req, std::function<void (cons
         response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, "未登录", data_JSON));
     }
     
+    callback(response);
+}
+
+void UserController::change_header(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
+    , api_data::user::HeaderImageData post_data)
+{
+    string filename, type_suffix;  // 预计写出文件名; .xxx，文件类型
+    string image_decoded;  // base64解码后的图片
+    ofstream image_of;  // 图片写出流
+    ifstream test_if;  // 测试文件是否存在的文件输入流
+    HttpResponsePtr response;
+
+    // 通过base64编码判断文件类型
+    if (post_data.image_base64.compare(0, 23, "data:image/jpeg;base64,") == 0)
+    {
+        type_suffix = ".jpg";
+        image_decoded = drogon::utils::base64Decode(post_data.image_base64.substr(23));
+    }
+    else if (post_data.image_base64.compare(0, 22, "data:image/png;base64,") == 0)
+    {
+        type_suffix = ".png";
+        image_decoded = drogon::utils::base64Decode(post_data.image_base64.substr(22));
+    }
+    else
+    {
+        // 非jpg和png图片或base64有误，返回错误
+        response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, "图片类型错误，仅允许jpeg和png"));
+        callback(response);
+        return;
+    }
+
+    // 通过打开ifstream流的方式测试文件是否凑在，并生成不存在的文件名
+    do {
+        filename = drogon::utils::getUuid();
+        try
+        { test_if.open(AVATAR_PATH + filename + type_suffix); }
+        catch (exception e) {}
+    } while (test_if.good());
+    test_if.close();
+
+    // 写出图片到文件
+    // 这里不太严谨，要是并发写同一个文件了怎么办？凑合了。
+    try 
+    {
+        image_of.open(AVATAR_PATH + filename + type_suffix);
+        image_of << image_decoded;
+        image_of.close();
+    } 
+    catch (exception e)
+    {
+        LOG_ERROR << "failed when call change_header(), file write failed";
+        response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, "图片写出失败"));
+        callback(response);
+        return;
+    }
+
+    // 更新数据库中头像
+    service::user::update_header(drogon_thread_to_user_id[app().getCurrentThreadIndex()], filename + type_suffix);
+    
+    response = HttpResponse::newHttpJsonResponse(getAPIJSON(true, "头像更新成功"));
     callback(response);
 }

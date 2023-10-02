@@ -7,6 +7,7 @@
 #include "../model/User.h"
 #include "../model/LoginTicket.h"
 #include "../util/CommnityUtil.h"
+#include "../plugin/SMTPMail.h"
 using namespace std;
 using namespace drogon_model::nowcoder;
 using namespace trantor;
@@ -15,6 +16,50 @@ using namespace trantor;
  * 向谷歌reCaptcha v2接口发送https post请求，来源见 https://blog.csdn.net/cjf_wei/article/details/79185310
  */
 bool google_verify(string ticket, Json::Value &google_answer);
+
+void LoginController::login(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
+    , api_data::login::LoginData post_data)
+{
+    User user;  // 登录用户，如果有
+    string error_message;  // 错误信息，如果错
+    bool success;  // 登录是否成功，调用UserService获得
+    string captcha_cookie = req->getCookie(COOKIE_KEY_CAPTCHA);
+    HttpResponsePtr response;
+
+    // 检查人机验证
+    LoginTicket captcha_ticket = service::login_ticket::find_login_ticket_by_ticket(captcha_cookie);
+    if (captcha_ticket.getValueOfId() == 0 || captcha_ticket.getValueOfExpired() < trantor::Date::now()) {
+        response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, "请进行人机验证（可能需要刷新页面）"));
+        callback(response);
+        return;
+    }
+
+    // 检查账号
+    success = service::user::login(post_data.username, post_data.password, user, error_message);
+    if (success) 
+    {
+        // 根据是否选择记住我设置登录过期时间和是否要延长（通过设置可以延长时间大于过期时间）
+        int expired_seconds = post_data.remember ? REMEMBER_EXPIRED_SECONDS : DEFAULT_EXPIRED_SECONDS;
+        int extend_seconds = post_data.remember ? expired_seconds * 0.8 : expired_seconds + 1;
+
+        // 生成jwt cookie
+        string token = jwt::create()
+            .set_subject(to_string(user.getValueOfId()))
+            // 过期时间，不用jwt的.set_expires_at的是因为又是个不一样的Date类，不设成exp是因为也会报错，tmo是time out的缩写
+            .set_payload_claim("tmo", jwt::claim(to_string(Date::now().after(expired_seconds).secondsSinceEpoch())))  
+            // 在ext时间后延长过期时间
+            .set_payload_claim("ext", jwt::claim(to_string(Date::now().after(extend_seconds).secondsSinceEpoch())))  
+            .set_type("JWS")
+            .sign(jwt::algorithm::hs256{JWT_SECRET});
+        
+        response = HttpResponse::newCustomHttpResponse(getAPIJSON(true, "登录成功"));
+        response->addHeader("Set-Cookie", COOKIE_KEY_JWT + "=" + token + "; Expires=Fri, 31 Dec 9999 23:59:59 GMT; Path=/");
+    }
+    else 
+        response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, error_message));
+
+    callback(response);
+}
 
 void LoginController::verifyCaptcha(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
     , api_data::login::CaptchaData post_data)
@@ -37,7 +82,7 @@ void LoginController::verifyCaptcha(const HttpRequestPtr &req, std::function<voi
 
             response = HttpResponse::newCustomHttpResponse(getAPIJSON(true
                 , "谷歌reCAPTCHA验证通过，challenge_ts: " + google_result.get("challenge_ts", "").toStyledString()));
-            response->addHeader("Set-Cookie", "nowcoder_captcha=" + captcha_ticket + "; Path=" + API_PREFIX + "/login"); 
+            response->addHeader("Set-Cookie", COOKIE_KEY_CAPTCHA + "=" + captcha_ticket + "; Path=" + API_PREFIX + "/login"); 
         }
         else
             response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, "谷歌reCAPTCHA说您不是人，抱歉"));
@@ -50,42 +95,41 @@ void LoginController::verifyCaptcha(const HttpRequestPtr &req, std::function<voi
     callback(response);
 }
 
-void LoginController::login(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
-    , api_data::login::LoginData post_data)
+void LoginController::logout(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback)
 {
-    User user;  // 登录用户，如果有
-    string error_message;  // 错误信息，如果错
-    bool success;  // 登录是否成功，调用UserService获得
-    string captcha_cookie = req->getCookie("nowcoder_captcha");
+    // 重定向到默认页面
+    HttpResponsePtr response = HttpResponse::newRedirectionResponse("/");
+    // 删除jwt cookie
+    response->addHeader("Set-Cookie", COOKIE_KEY_JWT + "=; Path=/; Max-Age=0");
+    callback(response);
+}
+
+void LoginController::enroll(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
+    , api_data::login::RegisterData post_data)
+{
+    string error_message;
+    bool success = service::user::enroll(post_data.username, post_data.password, post_data.email, error_message);
     HttpResponsePtr response;
-
-    // 检查人机验证
-    LoginTicket captcha_ticket = service::login_ticket::find_login_ticket_by_ticket(captcha_cookie);
-    if (captcha_ticket.getValueOfId() == 0 || captcha_ticket.getValueOfExpired() < trantor::Date::now()) {
-        response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, "请进行人机验证（可能需要刷新页面）"));
-        callback(response);
-        return;
-    }
-
-    // 检查账号
-    success = service::user::login(post_data.username, post_data.password, user, error_message);
-    if (success) 
-    {
-        // 生成jwt cookie
-        string token = jwt::create()
-            .set_subject(to_string(user.getValueOfId()))
-            // 过期时间，不用jwt的.set_expires_at的是因为又是个不一样的Date类，不设成exp是因为也会报错
-            .set_payload_claim("tmo", jwt::claim(to_string(Date::now().after(DEFAULT_EXPIRED_SECONDS).secondsSinceEpoch())))  
-            // 在ext时间后延长过期时间
-            .set_payload_claim("ext", jwt::claim(to_string(Date::now().after(DEFAULT_EXPIRED_SECONDS * 0.8).secondsSinceEpoch())))  
-            .set_type("JWS")
-            .sign(jwt::algorithm::hs256{JWT_SECRET});
-        
-        response = HttpResponse::newCustomHttpResponse(getAPIJSON(true, "登录成功"));
-        response->addHeader("Set-Cookie", "nowcoder_jwt=" + token + "; Expires=Fri, 31 Dec 9999 23:59:59 GMT; Path=/");
-    }
-    else 
+    
+    if (success)
+        response = HttpResponse::newHttpJsonResponse(getAPIJSON(true, "注册成功，等待激活"));
+    else
         response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, error_message));
+
+    callback(response);
+}
+
+void LoginController::activation(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
+    , int user_id, string code)
+{
+    string error_message;
+    bool success = service::user::activation(user_id, code, error_message);
+    HttpResponsePtr response = HttpResponse::newHttpResponse();
+
+    if (success)
+        response->setBody("<h1>激活成功，可以去登录了</h1>");
+    else
+        response->setBody("<h1>" + error_message + "</h1>");
 
     callback(response);
 }

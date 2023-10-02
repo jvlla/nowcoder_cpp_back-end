@@ -1,6 +1,8 @@
 #include "CommnityUtil.h"
 using namespace std;
 
+std::unordered_map<int, int> drogon_thread_to_user_id;
+
 Json::Value getAPIJSON(bool success, std::string message, Json::Value &data)
 {
     Json::Value ret;

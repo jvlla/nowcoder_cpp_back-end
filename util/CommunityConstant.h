@@ -10,3 +10,6 @@ extern const int DEFAULT_EXPIRED_SECONDS;
 extern const int REMEMBER_EXPIRED_SECONDS;
 extern const int CAPTCHA_EXPIRED_SECONDS;
 extern const std::string JWT_SECRET;
+extern const std::string COOKIE_KEY_CAPTCHA;
+extern const std::string COOKIE_KEY_JWT;
+extern const std::string AVATAR_PATH;

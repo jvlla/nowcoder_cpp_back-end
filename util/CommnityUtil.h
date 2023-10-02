@@ -2,8 +2,11 @@
  * 辅助函数头文件
  */
 #pragma once
+#include <unordered_map>
 #include <jsoncpp/json/json.h>
 #include <drogon/drogon.h>
+
+extern std::unordered_map<int, int> drogon_thread_to_user_id;
 
 /*
  * 生成符合API格式的JSON数据

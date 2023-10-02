@@ -24,7 +24,7 @@ void DiscussPostController::get_discuss_post(const HttpRequestPtr& request
         
         Json::Value postJSON;
         postJSON["username"] = user.getValueOfUsername();
-        postJSON["userHeaderURL"] = "defaultAvatar.jpeg";
+        postJSON["userHeaderURL"] = "http://" + drogon::app().getListeners()[0].toIpPort() + "/avatar/" + user.getValueOfHeaderUrl();
         postJSON["title"] = posts[i].getValueOfTitle();
         postJSON["content"] = posts[i].getValueOfContent();
         postJSON["postRecord"] = posts[i].getValueOfCreateTime().toDbStringLocal();

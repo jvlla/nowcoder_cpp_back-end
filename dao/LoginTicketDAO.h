@@ -6,6 +6,7 @@
 
 namespace dao {
 namespace login_ticket {
+
 /*
  * insert into login_ticket
  * values(#{login_ticket})

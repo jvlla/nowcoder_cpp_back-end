@@ -13,7 +13,14 @@ struct CaptchaData{
 struct LoginData {
     std::string username;
     std::string password;
-    // bool is_remember;
+    bool remember;
+};
+
+struct RegisterData {
+    std::string username;
+    std::string password;
+    std::string rePassword;
+    std::string email;
 };
 }
 
@@ -32,11 +39,29 @@ template<> inline api_data::login::LoginData fromRequest(const HttpRequest &req)
 {
     auto json = req.getJsonObject();
     api_data::login::LoginData data;
-    if (json) {
+    if (json) 
+    {
         data.username = (*json)["username"].asString();
         data.password = (*json)["password"].asString();
+        data.remember = (*json)["rememberMe"].asBool();
     }
 
     return data;
 }
+
+template<> inline api_data::login::RegisterData fromRequest(const HttpRequest &req)
+{
+    auto json = req.getJsonObject();
+    api_data::login::RegisterData data;
+    if (json) 
+    {
+        data.username = (*json)["username"].asString();
+        data.password = (*json)["password"].asString();
+        data.rePassword = (*json)["rePassword"].asString();
+        data.email = (*json)["email"].asString();
+    }
+
+    return data;
+}
+
 }
