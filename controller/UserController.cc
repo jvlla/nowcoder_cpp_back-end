@@ -21,7 +21,7 @@ void UserController::get_user(const HttpRequestPtr &req, std::function<void (con
         User user = service::user::find_user_by_id(user_id);
         user_JSON["userId"] = user_id;
         user_JSON["username"] = user.getValueOfUsername();
-        user_JSON["userHeaderURL"] = "http://" + drogon::app().getListeners()[0].toIpPort() + "/avatar/" + user.getValueOfHeaderUrl();
+        user_JSON["userHeaderURL"] = avatar_file_to_url(user.getValueOfHeaderUrl());
         data_JSON["user"] = user_JSON;
         response = HttpResponse::newHttpJsonResponse(getAPIJSON(true, "已登录", data_JSON));
     }
@@ -29,7 +29,7 @@ void UserController::get_user(const HttpRequestPtr &req, std::function<void (con
     {
         user_JSON["userId"] = 0;
         user_JSON["username"] = "";
-        user_JSON["userHeaderURL"] = "defaultAvatar.jpeg";
+        user_JSON["userHeaderURL"] = avatar_file_to_url("defaultAvatar.jpg");
         data_JSON["user"] = user_JSON;
         response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, "未登录", data_JSON));
     }
@@ -67,7 +67,7 @@ void UserController::change_header(const HttpRequestPtr &req, std::function<void
 
     // 通过打开ifstream流的方式测试文件是否凑在，并生成不存在的文件名
     do {
-        filename = drogon::utils::getUuid();
+        filename = get_uuid_lower();
         try
         { test_if.open(AVATAR_PATH + filename + type_suffix); }
         catch (exception e) {}

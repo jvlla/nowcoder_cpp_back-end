@@ -34,3 +34,28 @@ Json::Value getAPIJSON(bool success, std::string message);
  * }
  */
 Json::Value getAPIJSON(bool success);
+
+/*
+ * 将数据库中的文件名转化为前端可以访问的URL地址
+ * 额，虽然字段名叫header_url，但实际放文件名了，所以需要在转变一次，前面加上ip和路径
+ * @param user表中header_url路径
+ * @return ip/avatar/"filename"
+ */
+std::string avatar_file_to_url(const std::string &filename);
+
+/*
+ * 将<>"&进行html转义，避免sql注入
+ * @param raw 原始内容
+ * @return 转义后的内容
+ */
+std::string escape_html(const std::string &raw);
+
+/*
+ * 获得小写的md5散列值
+ */
+std::string get_md5_lower(const std::string &str);
+
+/*
+ * 获得小写的uuid
+ */
+std::string get_uuid_lower();

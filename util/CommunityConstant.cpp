@@ -15,9 +15,14 @@ const int REMEMBER_EXPIRED_SECONDS = 3600 * 24 * 100;
 const std::string JWT_SECRET = "nowcoder_ht";
 
 // captcha的cookie的key
-extern const std::string COOKIE_KEY_CAPTCHA = "nowcoder_captcha";
+const std::string COOKIE_KEY_CAPTCHA = "nowcoder_captcha";
 // jwt的cookie的key
-extern const std::string COOKIE_KEY_JWT = "nowcoder_jwt";
+const std::string COOKIE_KEY_JWT = "nowcoder_jwt";
 
 // 头像文件夹路径
-extern const std::string AVATAR_PATH = "./avatar/";
+const std::string AVATAR_PATH = "./avatar/";
+
+// 实体类型，帖子
+const int ENTITY_TYPE_POST = 1;
+// 实体类型:，评论
+const int ENTITY_TYPE_COMMENT = 2;

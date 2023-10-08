@@ -19,7 +19,7 @@ struct LoginData {
 struct RegisterData {
     std::string username;
     std::string password;
-    std::string rePassword;
+    std::string re_password;
     std::string email;
 };
 }
@@ -57,7 +57,7 @@ template<> inline api_data::login::RegisterData fromRequest(const HttpRequest &r
     {
         data.username = (*json)["username"].asString();
         data.password = (*json)["password"].asString();
-        data.rePassword = (*json)["rePassword"].asString();
+        data.re_password = (*json)["rePassword"].asString();
         data.email = (*json)["email"].asString();
     }
 

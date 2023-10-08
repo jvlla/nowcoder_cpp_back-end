@@ -4,11 +4,7 @@
 # 不提交build文件夹内容，并保留log和avatar文件夹
 build/*
 !build/.gitkeep
-!build/log
-build/log/*
 !build/log/.gitkeep
-!build/avatar
-build/avatar/*
 !build/avatar/.gitkeep
 
 ### C ###

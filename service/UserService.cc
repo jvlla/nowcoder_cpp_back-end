@@ -5,6 +5,7 @@
 #include "../model/User.h"
 #include "../model/LoginTicket.h"
 #include "../util/CommunityConstant.h"
+#include "../util/CommnityUtil.h"
 #include "../plugin/SMTPMail.h"
 using namespace std;
 using namespace drogon;
@@ -47,9 +48,7 @@ bool login(string username, string password, User &user, string &error_message)
         return false;
     }
     // 验证密码
-    string password_salt_md5 = utils::getMd5(password + user.getValueOfSalt());
-    transform(password_salt_md5.begin(), password_salt_md5.end(), password_salt_md5.begin(), ::tolower);  // 转小写，因为自带数据为小写
-    if (user.getValueOfPassword() != password_salt_md5) {
+    if (user.getValueOfPassword() != get_md5_lower(password + user.getValueOfSalt())) {
         error_message = "密码错误";
         return false;
     }
@@ -93,10 +92,8 @@ bool enroll(std::string username, std::string password, std::string email, std::
     // 注册用户
     User user;
     user.setUsername(username);
-    user.setSalt(utils::getUuid().substr(0, 5));
-    string password_salt_md5 = utils::getMd5(password + user.getValueOfSalt());
-    transform(password_salt_md5.begin(), password_salt_md5.end(), password_salt_md5.begin(), ::tolower);  // 转小写，因为自带数据为小写
-    user.setPassword(password_salt_md5);
+    user.setSalt(get_uuid_lower().substr(0, 5));
+    user.setPassword(get_md5_lower(password + user.getValueOfSalt()));
     user.setEmail(email);
     user.setType(0);
     user.setStatus(0);

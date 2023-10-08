@@ -6,6 +6,7 @@
 
 namespace dao {
 namespace discuss_post {
+
 /*
  * select * from discuss_post
  * where status != 2
@@ -15,6 +16,11 @@ namespace discuss_post {
  * @return 成功: 查询到的discuss_post; 失败: 空vector
  */
 std::vector<drogon_model::nowcoder::DiscussPost> select_discuss_post(int user_id, int offset, int limit);
+
+/*
+ * 
+ */
+drogon_model::nowcoder::DiscussPost select_discuss_post(int discuss_post_id);
 
 /*
  * select count(id)
@@ -29,7 +35,7 @@ int select_discuss_post_rows(int userId);
 /*
  * insert into discuss_post
  * values(#{discuss_post})
- * @return 成功: ; 失败: 
+ * @return 成功: 1; 失败: -1
  */
 int insert_discuss_post(drogon_model::nowcoder::DiscussPost discuss_post);
 
