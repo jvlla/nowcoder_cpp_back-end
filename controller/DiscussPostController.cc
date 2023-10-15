@@ -2,6 +2,7 @@
 #include "DiscussPostController.h"
 #include "../service/DiscussPostService.h"
 #include "../service/UserService.h"
+#include "../service/LikeService.h"
 #include "../model/User.h"
 #include "../model/DiscussPost.h"
 #include "../util/CommnityUtil.h"
@@ -24,6 +25,7 @@ void DiscussPostController::get_discuss_posts(const HttpRequestPtr& request
         User user = service::user::find_user_by_id(stoi(posts[i].getValueOfUserId()));  // 不改变牛客提供sql中数据类型varchar(45)，类型转换
         
         Json::Value post_JSON;
+        post_JSON["userId"] = user.getValueOfId();
         post_JSON["username"] = user.getValueOfUsername();
         post_JSON["userHeaderURL"] = avatar_file_to_url(user.getValueOfHeaderUrl());
         post_JSON["postId"] = posts[i].getValueOfId();
@@ -53,13 +55,16 @@ void DiscussPostController::get_discuss_post(const HttpRequestPtr& request, std:
 
     // 添加discuss_post帖子相关内容
     post_JSON["postId"] = post.getValueOfId();
+    post_JSON["userId"] = user.getValueOfId();
     post_JSON["username"] = user.getValueOfUsername();
     post_JSON["userHeaderURL"] = avatar_file_to_url(user.getValueOfHeaderUrl());
     post_JSON["title"] = post.getValueOfTitle();
     post_JSON["content"] = post.getValueOfContent();
     post_JSON["postRecord"] = post.getValueOfCreateTime().toDbStringLocal();
     post_JSON["commentCount"] = post.getValueOfCommentCount();
-    post_JSON["likeCount"] = 10;  // 点赞用redis,之后再搞
+    post_JSON["likeRawStatus"] = service::like::find_entity_like_status(
+        drogon_thread_to_user_id[drogon::app().getCurrentThreadIndex()], ENTITY_TYPE_POST, post.getValueOfId());
+    post_JSON["likeRawCount"] = service::like::find_entity_like_count(ENTITY_TYPE_POST, post.getValueOfId());
     data_JSON["data"] = post_JSON;
 
     HttpResponsePtr response = HttpResponse::newHttpJsonResponse(getAPIJSON(true, "帖子详情", data_JSON));

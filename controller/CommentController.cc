@@ -2,6 +2,7 @@
 #include "CommentController.h"
 #include "../service/CommentService.h"
 #include "../service/UserService.h"
+#include "../service/LikeService.h"
 #include "../model/Comment.h"
 #include "../util/CommnityUtil.h"
 #include "../util/CommunityConstant.h"
@@ -30,6 +31,7 @@ void CommentController::get_comments(const HttpRequestPtr& request
             Json::Value reply_JSON;
             User reply_user = service::user::find_user_by_id(replys[j].getValueOfUserId());
 
+            reply_JSON["replyId"] = replys[j].getValueOfId();  // reply本身的id
             reply_JSON["commentId"] = comments[i].getValueOfId();  // reply回复的comment的id，因为回复reply的reply的entity_id还是comment的id
             reply_JSON["userId"] = reply_user.getValueOfId();  // 发表reply的用户id,因为回复reply的reply的target_id是这个
             reply_JSON["username"] = reply_user.getValueOfUsername();  // 发表reply的用户名
@@ -37,7 +39,9 @@ void CommentController::get_comments(const HttpRequestPtr& request
                 ? "" : service::user::find_user_by_id(replys[j].getValueOfTargetId()).getValueOfUsername();
             reply_JSON["content"] = replys[j].getValueOfContent();
             reply_JSON["replyRecord"] = replys[j].getValueOfCreateTime().toDbStringLocal();
-            reply_JSON["likeCount"] = j;  // 点赞用redis,之后再搞
+            reply_JSON["likeRawStatus"] = service::like::find_entity_like_status(
+                drogon_thread_to_user_id[drogon::app().getCurrentThreadIndex()], ENTITY_TYPE_COMMENT, replys[j].getValueOfId());
+            reply_JSON["likeRawCount"] = service::like::find_entity_like_count(ENTITY_TYPE_COMMENT, replys[j].getValueOfId());
 
             replys_JSON[j] = reply_JSON;
         }
@@ -49,11 +53,14 @@ void CommentController::get_comments(const HttpRequestPtr& request
 
         // 添加comment评论相关内容
         comment_JSON["commentId"] = comments[i].getValueOfId();
+        comment_JSON["userId"] = comments[i].getValueOfUserId();
         comment_JSON["username"] = comment_user.getValueOfUsername();
         comment_JSON["userHeaderURL"] = avatar_file_to_url(comment_user.getValueOfHeaderUrl());
         comment_JSON["content"] = comments[i].getValueOfContent();
         comment_JSON["commentRecord"] = comments[i].getValueOfCreateTime().toDbStringLocal();
-        comment_JSON["likeCount"] = i;  // 点赞用redis,之后再搞
+        comment_JSON["likeRawStatus"] = service::like::find_entity_like_status(
+            drogon_thread_to_user_id[drogon::app().getCurrentThreadIndex()], ENTITY_TYPE_COMMENT, comments[i].getValueOfId());
+        comment_JSON["likeRawCount"] = service::like::find_entity_like_count(ENTITY_TYPE_COMMENT, comments[i].getValueOfId());
         comments_JSON[i] = comment_JSON;
     }
     // 评论数据

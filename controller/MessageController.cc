@@ -29,6 +29,7 @@ void MessageController::get_letters(const HttpRequestPtr& request, std::function
         Json::Value letter_JSON;
         letter_JSON["conversationId"] = letters[i].getValueOfConversationId();
         letter_JSON["content"] = letters[i].getValueOfContent();
+        letter_JSON["targetId"] = target_user.getValueOfId();
         letter_JSON["targetName"] = target_user.getValueOfUsername();
         letter_JSON["targetHeaderUrl"] = avatar_file_to_url(target_user.getValueOfHeaderUrl());
         letter_JSON["letterRecord"] = letters[i].getValueOfCreateTime().toDbStringLocal();

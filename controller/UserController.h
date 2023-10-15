@@ -13,6 +13,7 @@ class UserController : public drogon::HttpController<UserController>
     METHOD_LIST_BEGIN
     ADD_METHOD_TO(UserController::get_user, API_PREFIX + "/user", Get);
     ADD_METHOD_TO(UserController::change_header, API_PREFIX + "/user/changeHeader", Post, "LoginRequired");
+    ADD_METHOD_TO(UserController::get_profile, API_PREFIX + "/user/profile/{1}", Get);
     METHOD_LIST_END
 
     /*
@@ -45,4 +46,6 @@ class UserController : public drogon::HttpController<UserController>
      */
     void change_header(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
       , api_data::user::HeaderImageData post_data);
+    
+    void get_profile(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback, int user_id);
 };

@@ -2,6 +2,8 @@
 #include <fstream>
 #include <jwt-cpp/jwt.h>
 #include "../service/UserService.h"
+#include "../service/LikeService.h"
+#include "../service/FollowService.h"
 #include "../dao/UserDAO.h"
 #include "../model/User.h"
 #include "../util/CommnityUtil.h"
@@ -94,5 +96,47 @@ void UserController::change_header(const HttpRequestPtr &req, std::function<void
     service::user::update_header(drogon_thread_to_user_id[app().getCurrentThreadIndex()], filename + type_suffix);
     
     response = HttpResponse::newHttpJsonResponse(getAPIJSON(true, "头像更新成功"));
+    callback(response);
+}
+
+void UserController::get_profile(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
+    , int user_id)
+{
+    User user = service::user::find_user_by_id(user_id);
+    Json::Value data_JSON, user_JSON;
+    HttpResponsePtr response;
+
+    // 生成返回响应
+    if (user.getValueOfId() != 0)
+    {
+        user_JSON["userId"] = user_id;
+        user_JSON["username"] = user.getValueOfUsername();
+        user_JSON["userHeaderURL"] = avatar_file_to_url(user.getValueOfHeaderUrl());
+        user_JSON["registerRecord"] = user.getValueOfCreateTime().toDbString();
+        user_JSON["likeCount"] = service::like::find_user_like_count(user_id);
+        user_JSON["followeeCount"] = service::follow::find_followee_count(user_id, ENTITY_TYPE_USER);
+        user_JSON["followerCount"] = service::follow::find_follower_count(ENTITY_TYPE_USER, user_id);
+        if (drogon_thread_to_user_id[drogon::app().getCurrentThreadIndex()] != 0)
+            user_JSON["hasFollowed"] = service::follow::has_followed(drogon_thread_to_user_id[drogon::app().getCurrentThreadIndex()]
+                , ENTITY_TYPE_USER, user_id);
+        else
+            user_JSON["hasFollowed"] = false;
+        data_JSON["data"] = user_JSON;
+        response = HttpResponse::newHttpJsonResponse(getAPIJSON(true, "已登录", data_JSON));
+    }
+    else
+    {
+        user_JSON["userId"] = 0;
+        user_JSON["username"] = "";
+        user_JSON["userHeaderURL"] = avatar_file_to_url("defaultAvatar.jpg");
+        user_JSON["registerRecord"] = "";
+        user_JSON["likeCount"] = 0;
+        user_JSON["followeeCount"] = 0;
+        user_JSON["followerCount"] = 0;
+        user_JSON["hasFollowed"] = false;
+        data_JSON["data"] = user_JSON;
+        response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, "未登录", data_JSON));
+    }
+    
     callback(response);
 }

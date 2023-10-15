@@ -71,7 +71,7 @@
             "auto_batch": false
         }
     ],
-    /*"redis_clients": [
+    "redis_clients": [
         {
             //name: Name of the client,'default' by default
             //"name":"",
@@ -95,7 +95,7 @@
             //zero or negative value means no timeout.
             "timeout": -1.0
         }
-    ],*/
+    ],
     "app": {
         //number_of_threads: The number of IO threads, 1 by default, if the value is set to 0, the number of threads
         //is the number of CPU cores

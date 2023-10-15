@@ -6,16 +6,29 @@
 #include "../model/LoginTicket.h"
 #include "../util/CommunityConstant.h"
 #include "../util/CommnityUtil.h"
+#include "../util/RedisKeyUtil.h"
 #include "../plugin/SMTPMail.h"
 using namespace std;
 using namespace drogon;
+using namespace drogon::nosql;
 using namespace drogon_model::nowcoder;
+
+User get_cache(int user_id);
+// 2.取不到时初始化缓存数据
+User init_cache(int user_id);
+// 3.数据变更时清除缓存数据
+void clear_cache(int user_id);
 
 namespace service::user {
 
 User find_user_by_id(int id) 
 {
-    return dao::user::select_by_id(id);
+    User user = get_cache(id);
+    if (user.getValueOfId() == 0) {
+        user = init_cache(id);
+    }
+
+    return user;
 }
 
 drogon_model::nowcoder::User find_user_by_name(std::string username)
@@ -137,6 +150,7 @@ bool activation(int user_id, std::string code, std::string &error_message)
     if (user.getValueOfActivationCode() == code) 
     {
         dao::user::update_status(user.getValueOfId(), 1);
+        clear_cache(user_id);
         return true;
     } 
     else 
@@ -145,7 +159,72 @@ bool activation(int user_id, std::string code, std::string &error_message)
 
 int update_header(int user_id, std::string header_url)
 {
-    return dao::user::update_header(user_id, header_url);
+    int rows = dao::user::update_header(user_id, header_url);
+    clear_cache(user_id);
+    
+    return rows;
 }
 
+}
+
+// 1.优先从缓存中取值
+User get_cache(int user_id) {
+    RedisClientPtr redis_client = app().getRedisClient();
+    string user_key = get_user_key(user_id);
+    string user_json_str;
+    User user;
+
+    try {
+        user_json_str = redis_client->execCommandSync<string>(
+            [](const RedisResult &r){
+                if (r.type() != RedisResultType::kNil)
+                    return r.asString();
+                else
+                    return string("");
+            },
+            "GET " + user_key
+        );
+    } catch (const exception &e) { LOG_ERROR << "error when get_cache()" << e.what(); }
+    user_json_str = utils::base64Decode(user_json_str);
+
+    try 
+    {
+        Json::Value user_json;
+        Json::Reader reader;
+        reader.parse(user_json_str, user_json);
+        user = User(user_json);
+    }
+    catch (std::exception e) {}
+
+    return user;
+}
+
+// 2.取不到时初始化缓存数据
+User init_cache(int user_id) {
+    RedisClientPtr redis_client = app().getRedisClient();
+    User user = dao::user::select_by_id(user_id);
+    string user_key = get_user_key(user_id);
+    string user_json_str = utils::base64Encode(user.toJson().toStyledString());  // base64编码后才能符合redis的要求
+
+    try {
+        redis_client->execCommandSync<string>(
+            [](const RedisResult &r) { return ""; }
+            , "SET " + user_key + " " + user_json_str + " EX 3600"
+        );
+    } catch (const exception &e) { LOG_ERROR << "error when init_cache()" << e.what(); }
+
+    return user;
+}
+
+// 3.数据变更时清除缓存数据
+void clear_cache(int user_id) {
+    RedisClientPtr redis_client = app().getRedisClient();
+    string user_key = get_user_key(user_id);
+
+    try {
+        redis_client->execCommandSync<string>(
+            [](const RedisResult &r) { return ""; }
+            , "DEL " + user_key
+        );
+    } catch (const exception &e) { LOG_ERROR << "clear_cache()" << e.what(); }
 }
