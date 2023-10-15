@@ -36,7 +36,7 @@ drogon_model::nowcoder::LoginTicket select_login_ticket_by_ticket(std::string ti
     try
     {
         vector<LoginTicket> tickets = select_future.get();
-        if (tickets.size() > 0)
+        if (!tickets.empty())
             return tickets[0];
         else
             return LoginTicket();

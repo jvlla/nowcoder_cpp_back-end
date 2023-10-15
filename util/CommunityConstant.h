@@ -15,3 +15,6 @@ extern const std::string COOKIE_KEY_JWT;
 extern const std::string AVATAR_PATH;
 extern const int ENTITY_TYPE_POST;
 extern const int ENTITY_TYPE_COMMENT;
+extern const std::string TOPIC_COMMENT;
+extern const std::string TOPIC_LIKE;
+extern const std::string TOPIC_FOLLOW;

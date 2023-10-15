@@ -24,5 +24,13 @@ const std::string AVATAR_PATH = "./avatar/";
 
 // 实体类型，帖子
 const int ENTITY_TYPE_POST = 1;
-// 实体类型:，评论
+// 实体类型，评论
 const int ENTITY_TYPE_COMMENT = 2;
+
+
+// 主题: 评论
+const std::string TOPIC_COMMENT = "comment";
+// 主题: 点赞
+const std::string TOPIC_LIKE = "like";
+// 主题: 关注
+const std::string TOPIC_FOLLOW = "follow";

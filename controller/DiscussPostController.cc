@@ -2,8 +2,8 @@
 #include "DiscussPostController.h"
 #include "../service/DiscussPostService.h"
 #include "../service/UserService.h"
-#include "../model/DiscussPost.h"
 #include "../model/User.h"
+#include "../model/DiscussPost.h"
 #include "../util/CommnityUtil.h"
 using namespace std;
 using namespace drogon_model::nowcoder;

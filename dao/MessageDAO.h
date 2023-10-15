@@ -84,5 +84,55 @@ int insert_message(drogon_model::nowcoder::Message message);
  */
 int update_status(std::vector<int> ids, int status);
 
+/*
+ * select *
+ * from message
+ * where id in (
+ *     select max(id) from message
+ *     where status != 2
+ *     and from_id = 1
+ *     and to_id = #{user_id}
+ *     and conversation_id = #{topic}
+ * )
+ * @return 成功: Message vector; 失败: 空vector
+ */
+drogon_model::nowcoder::Message select_latest_notice(int user_id, std::string topic);
+
+/*
+ * select count(*) from messag
+ * where status != 2
+ * and from_id = 1
+ * and to_id = #{user_id}
+ * and conversation_id = #{topic}
+ * @return 成功: 系统通知行数; 失败: -1
+ */
+int select_notice_count(int user_id, std::string topic);
+
+/*
+ * select count(id) from message
+ * where status = 0
+ * and from_id = 1
+ * and to_id = #{userId}
+ * <if test="topic!=null">
+ *     and conversation_id = #{topic}
+ * </if>
+ * @param topic 为""不作为查询条件
+ * @return @return 成功: 未读系统通知行数; 失败: -1
+ */
+int select_notice_unread_count(int user_id, std::string topic);
+
+/*
+ * select *
+ * from message
+ * where status != 2
+ * and from_id = 1
+ * and to_id = #{userId}
+ * and conversation_id = #{topic}
+ * order by create_time desc
+ * limit #{offset}, #{limit}
+ * @return 成功: Message vector; 失败: 空vector
+ */
+std::vector<drogon_model::nowcoder::Message> select_notices(int user_id, std::string topic, int offset, int limit);
+
 }
 }

@@ -35,4 +35,24 @@ int read_message(vector<int> ids) {
     return dao::message::update_status(ids, 1);
 }
 
+Message find_latest_notice(int user_id, string topic) 
+{
+    return dao::message::select_latest_notice(user_id, topic);
+}
+
+int find_notice_count(int user_id, string topic) 
+{
+    return dao::message::select_notice_count(user_id, topic);
+}
+
+int find_notice_unread_count(int user_id, string topic) 
+{
+    return dao::message::select_notice_unread_count(user_id, topic);
+}
+
+vector<Message> find_notices(int user_id, string topic, int offset, int limit) 
+{
+    return dao::message::select_notices(user_id, topic, offset, limit);
+}
+
 }

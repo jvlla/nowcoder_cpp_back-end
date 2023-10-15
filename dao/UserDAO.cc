@@ -35,7 +35,7 @@ User select_by_username(std::string username)
     try
     {
         vector<User> users = select_future.get();
-        if (users.size() > 0)
+        if (!users.empty())
             return users[0];
         else
             return User();
@@ -55,7 +55,7 @@ User select_by_email(std::string email)
     try
     {
         vector<User> users = select_future.get();
-        if (users.size() > 0)
+        if (!users.empty())
             return users[0];
         else
             return User();

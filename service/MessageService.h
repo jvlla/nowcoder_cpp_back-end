@@ -60,5 +60,35 @@ int add_message(drogon_model::nowcoder::Message message);
  */
 int read_message(std::vector<int> ids);
 
+/*
+ * 查询最新系统通知
+ * @param user_id 用户id
+ * @param topic 通知类型
+ */
+drogon_model::nowcoder::Message find_latest_notice(int user_id, std::string topic);
+
+/*
+ * 查询系统通知数量
+ * @param user_id 用户id
+ * @param topic 通知类型
+ */
+int find_notice_count(int user_id, std::string topic);
+
+/*
+ * 查询未读系统通知数量
+ * @param user_id 用户id
+ * @param topic 通知类型
+ */
+int find_notice_unread_count(int user_id, std::string topic);
+
+/*
+ * 查询系统通知
+ * @param user_id 用户id
+ * @param topic 通知类型
+ * @param offset 偏移量
+ * @param limit 数量限制
+ */
+std::vector<drogon_model::nowcoder::Message> find_notices(int user_id, std::string topic, int offset, int limit);
+
 }
 }

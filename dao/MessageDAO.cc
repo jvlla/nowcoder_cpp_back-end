@@ -16,12 +16,12 @@ std::vector<drogon_model::nowcoder::Message> select_conversations(int user_id, i
     Mapper<Message> mapper = get_message_mapper();
     future<vector<Message>> select_future = mapper.orderBy(Message::Cols::_id, SortOrder::DESC).offset(offset).limit(limit)
         .findFutureBy(Criteria(
-            "id in (" \
-                "select max(id) from message" \
-                "where status != 2" \
-                "and from_id != 1" \
-                "and (from_id = $? or to_id = $?)" \
-                "group by conversation_id" \
+            "id in ( "
+                "select max(id) from message "
+                "where status != 2 "
+                "and from_id != 1 "
+                "and (from_id = $? or to_id = $?) "
+                "group by conversation_id "
             ")"_sql
         , user_id, user_id)
     );
@@ -42,20 +42,18 @@ std::vector<drogon_model::nowcoder::Message> select_conversations(int user_id, i
 int select_conversation_count(int user_id)
 {
     DbClientPtr client_ptr = app().getDbClient();
-    string sql = "select count(*) from ("
-            "select max(id) as maxid from message"
-            "where status != 2"
-            "and from_id != 1"
-            "and (from_id = " + to_string(user_id) + " or to_id = " + to_string(user_id) +
-            "group by conversation_id"
-        ") as m";
-    cout << sql << endl;
+    string sql = "select count(m.maxid) from ( "
+            "select max(id) as maxid from message "
+            "where status != 2 "
+            "and from_id != 1 "
+            "and (from_id = " + to_string(user_id) + " or to_id = " + to_string(user_id) + ") "
+            "group by conversation_id "
+        ") as m ";
     future<Result> count_future = client_ptr->execSqlAsyncFuture(sql);
 
     try
     {
         Result result = count_future.get();
-        cout << "会话数: " << result[0][0].c_str() << endl;
         int count = stoi(result[0][0].c_str());
         return count;
     }
@@ -157,12 +155,12 @@ int update_status(std::vector<int> ids, int status)
     future<size_t> update_future;
     string ids_sql;
 
-    ids_sql = "(";
+    ids_sql = "id in (";
     for (int i = 0; i < ids.size() - 1; i++) 
         ids_sql += to_string(ids[i]) + ", ";
     ids_sql += to_string(ids[ids.size() - 1]) + ")";
     update_future = mapper.updateFutureBy( (Json::Value::Members) {"status"}
-        , Criteria("id in $?"_sql, ids_sql), status);
+        , Criteria(CustomSql(ids_sql)), status);
     try
     {
         size_t count = update_future.get();
@@ -172,6 +170,107 @@ int update_status(std::vector<int> ids, int status)
     {
         LOG_ERROR << "error when call dao::update_status(ids, " << status << "): "<< e.base().what();
         return -1;
+    }
+}
+
+drogon_model::nowcoder::Message select_latest_notice(int user_id, std::string topic)
+{
+    Mapper<Message> mapper = get_message_mapper();
+    future<vector<Message>> select_future = mapper.orderBy(Message::Cols::_id, SortOrder::DESC)
+        .findFutureBy(Criteria(
+            "id in ( "
+                "select max(id) from message "
+                "where status != 2 "
+                "and from_id = 1 "
+                "and to_id = $? "
+                "and conversation_id = $?"
+                "group by conversation_id "
+            ")"_sql
+        , user_id, topic)
+    );
+
+    try
+    {
+        vector<Message> messages = select_future.get();
+        if (!messages.empty())
+            return messages[0];
+        else
+            return Message();
+    }
+    catch(const DrogonDbException &e)
+    {
+        LOG_ERROR << "error when call dao::select_latest_notice(" << user_id << ", " << topic << "): "
+            << e.base().what();
+        return Message();
+    }
+}
+
+int select_notice_count(int user_id, std::string topic)
+{
+    Mapper<Message> mapper = get_message_mapper();
+    future<size_t> count_future = mapper.countFuture(Criteria(Message::Cols::_status, CompareOperator::NE, 2) 
+        && Criteria(Message::Cols::_from_id, CompareOperator::EQ, 1)
+        && Criteria(Message::Cols::_to_id, CompareOperator::EQ, user_id)
+        && Criteria(Message::Cols::_conversation_id, CompareOperator::EQ, topic));
+    
+    try
+    {
+        int count = count_future.get();
+        return count;
+    }
+    catch(const DrogonDbException &e)
+    {
+        LOG_ERROR << "error when call dao::select_notice_count(" << user_id << ", " << topic << "): "<< e.base().what();
+        return -1;
+    }
+}
+
+int select_notice_unread_count(int user_id, std::string topic)
+{
+    Mapper<Message> mapper = get_message_mapper();
+    future<size_t> count_future;
+
+    if (topic != "")
+        count_future = mapper.countFuture(Criteria(Message::Cols::_status, CompareOperator::EQ, 0) 
+            && Criteria(Message::Cols::_from_id, CompareOperator::EQ, 1)
+            && Criteria(Message::Cols::_to_id, CompareOperator::EQ, user_id)
+            && Criteria(Message::Cols::_conversation_id, CompareOperator::EQ, topic));
+    else
+        count_future = mapper.countFuture(Criteria(Message::Cols::_status, CompareOperator::EQ, 0) 
+            && Criteria(Message::Cols::_from_id, CompareOperator::EQ, 1)
+            && Criteria(Message::Cols::_to_id, CompareOperator::EQ, user_id));
+
+    try
+    {
+        int count = count_future.get();
+        return count;
+    }
+    catch(const DrogonDbException &e)
+    {
+        LOG_ERROR << "error when call dao::select_notice_unread_count(" << user_id << ", " << topic << "): "<< e.base().what();
+        return -1;
+    }
+}
+
+std::vector<drogon_model::nowcoder::Message> select_notices(int user_id, std::string topic, int offset, int limit)
+{
+    Mapper<Message> mapper = get_message_mapper();
+    future<vector<Message>> select_future = mapper.orderBy(Message::Cols::_id, SortOrder::DESC).offset(offset).limit(limit)
+        .findFutureBy(Criteria(Message::Cols::_status, CompareOperator::NE, 2) 
+            && Criteria(Message::Cols::_from_id, CompareOperator::EQ, 1)
+            && Criteria(Message::Cols::_to_id, CompareOperator::EQ, user_id)
+            && Criteria(Message::Cols::_conversation_id, CompareOperator::EQ, topic));
+    
+    try
+    {
+        vector<Message> messages = select_future.get();
+        return messages;
+    }
+    catch(const DrogonDbException &e)
+    {
+        LOG_ERROR << "error when call dao::select_notices(" << user_id << ", " << topic << ", " << offset << ", " 
+            << limit << "): " << e.base().what();
+        return {};
     }
 }
 
