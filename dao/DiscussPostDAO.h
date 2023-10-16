@@ -3,7 +3,6 @@
  */
 #pragma once
 #include "../model/DiscussPost.h"
-
 namespace dao {
 namespace discuss_post {
 

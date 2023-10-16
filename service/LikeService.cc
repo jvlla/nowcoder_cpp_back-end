@@ -32,6 +32,7 @@ void like(int user_id, int entity_type, int entity_id, int entity_user_id) {
         try {
             if (has_liked)
             {
+                // 已赞取消点赞
                 // 不知道为什么指定模板类型为void或没有就会报错，弄个类型先用
                 trans_ptr->execCommandSync<string>([](const RedisResult &r){ return ""; }
                     , "SREM " + entity_like_key + " %d", user_id);
@@ -40,6 +41,7 @@ void like(int user_id, int entity_type, int entity_id, int entity_user_id) {
             }
             else
             {
+                // 未赞进行点赞
                 trans_ptr->execCommandSync<string>([](const RedisResult &r){ return ""; }
                     , "SADD " + entity_like_key + " %d", user_id);
                 trans_ptr->execCommandSync<string>([](const RedisResult &r){ return ""; } 

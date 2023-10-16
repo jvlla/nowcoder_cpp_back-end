@@ -2,6 +2,7 @@
 #include "../service/UserService.h"
 #include "../service/FollowService.h"
 #include "../dao/UserDAO.h"
+#include "../kafka/KafkaProducer.h"
 #include "../util/CommnityUtil.h"
 using namespace drogon;
 using namespace std;
@@ -14,6 +15,15 @@ void FollowController::follow(const HttpRequestPtr& request, std::function<void 
     User user = service::user::find_user_by_id(drogon_thread_to_user_id[drogon::app().getCurrentThreadIndex()]);
 
     service::follow::follow(user.getValueOfId(), post_data.entity_type, post_data.entity_id);
+
+    // 通过kafka生产者发送关注系统通知
+    Json::Value content;
+    content["entityType"] = post_data.entity_type;
+    content["entityId"] = post_data.entity_id;
+    content["entityUserId"] = post_data.entity_id;  // 点赞的entity_id就是被点赞用户的id
+    content["userId"] = user.getValueOfId();
+    KafkaProducer::get_instance().post_message(TOPIC_FOLLOW, content);
+
     HttpResponsePtr response = HttpResponse::newHttpJsonResponse(getAPIJSON(true, "关注成功"));
     callback(response);
 }

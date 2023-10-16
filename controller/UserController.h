@@ -47,5 +47,24 @@ class UserController : public drogon::HttpController<UserController>
     void change_header(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
       , api_data::user::HeaderImageData post_data);
     
+    /*
+     * 获取当前用户详细信息，url为"/api/user/profile/{1}"
+     * @return 
+     * {
+     *   "success": true/false,
+     *   "message": "xxx",
+     *   "data":
+     *   {
+     *     "userId": "xxx"/"",
+     *     "username": "xxx"/"",
+     *     "userHeaderURL": "xxx"/"",
+     *     "registerRecord": "xxx",
+     *     "likecount": xxx,
+     *     "followeeCount": xxx,
+     *     "followerCount": xxx,
+     *     "hasFollowed": true/false
+     *   }
+     * }
+     */
     void get_profile(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback, int user_id);
 };

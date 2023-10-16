@@ -41,7 +41,7 @@ int find_letter_count(std::string conversation_id);
 
 /*
  * 查询用户未读私信数量
- * @param conversation_id 会话号（为0查找所有会话总未读私信数量）
+ * @param conversation_id 会话号（为空字符串查找所有会话总未读私信数量）
  * @return 未读私信数量
  */
 int find_letter_unread_count(int user_id, std::string conversation_id);
@@ -77,7 +77,7 @@ int find_notice_count(int user_id, std::string topic);
 /*
  * 查询未读系统通知数量
  * @param user_id 用户id
- * @param topic 通知类型
+ * @param topic 通知类型(为空字符串查询全部类型)
  */
 int find_notice_unread_count(int user_id, std::string topic);
 

@@ -19,3 +19,4 @@ extern const int ENTITY_TYPE_USER;
 extern const std::string TOPIC_COMMENT;
 extern const std::string TOPIC_LIKE;
 extern const std::string TOPIC_FOLLOW;
+extern const int SYSTEM_USER_ID;

@@ -4,6 +4,7 @@
 #include "../service/UserService.h"
 #include "../service/LikeService.h"
 #include "../model/Comment.h"
+#include "../kafka/KafkaProducer.h"
 #include "../util/CommnityUtil.h"
 #include "../util/CommunityConstant.h"
 using namespace std;
@@ -79,10 +80,11 @@ void CommentController::get_comments(const HttpRequestPtr& request
 void CommentController::add_comment(const HttpRequestPtr& request, std::function<void (const HttpResponsePtr &)> &&callback
     , api_data::comment::AddCommentData post_data)
 {
+    User user = service::user::find_user_by_id(drogon_thread_to_user_id[drogon::app().getCurrentThreadIndex()]);
     Comment comment;
     HttpResponsePtr response;
 
-    comment.setUserId(drogon_thread_to_user_id[drogon::app().getCurrentThreadIndex()]);
+    comment.setUserId(user.getValueOfId());
     comment.setEntityType(post_data.entity_type);
     comment.setEntityId(post_data.entity_id);
     comment.setTargetId(post_data.target_id);
@@ -92,7 +94,19 @@ void CommentController::add_comment(const HttpRequestPtr& request, std::function
 
     int ret = service::comment::add_comment(comment);
     if (ret == 1)
+    {
         response = HttpResponse::newHttpJsonResponse(getAPIJSON(true, "发帖成功"));
+
+        // 通过kafka生产者发送评论系统通知
+        Json::Value content;
+        content["entityType"] = post_data.entity_type;
+        content["entityId"] = post_data.entity_id;
+        content["entityUserId"] = post_data.entity_user_id;
+        content["userId"] = user.getValueOfId();
+        content["postId"] = post_data.post_id;
+
+        KafkaProducer::get_instance().post_message(TOPIC_COMMENT, content);
+    }
     else
         response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, "发帖失败"));
     

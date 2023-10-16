@@ -127,7 +127,7 @@ void MessageController::get_notices(const HttpRequestPtr& request, std::function
         Json::Value comment_JSON, content_JSON;
         Json::Reader reader;
 
-        reader.parse(notice.getValueOfContent(), content_JSON);
+        reader.parse(unescape_html(notice.getValueOfContent()), content_JSON);
 
         comment_JSON["type"] = TOPIC_COMMENT;
         comment_JSON["noticeRecord"] = notice.getValueOfCreateTime().toDbStringLocal();
@@ -144,7 +144,7 @@ void MessageController::get_notices(const HttpRequestPtr& request, std::function
         Json::Value like_JSON, content_JSON;
         Json::Reader reader;
 
-        reader.parse(notice.getValueOfContent(), content_JSON);
+        reader.parse(unescape_html(notice.getValueOfContent()), content_JSON);
 
         like_JSON["type"] = TOPIC_LIKE;
         like_JSON["noticeRecord"] = notice.getValueOfCreateTime().toDbStringLocal();;
@@ -161,7 +161,7 @@ void MessageController::get_notices(const HttpRequestPtr& request, std::function
         Json::Value follow_JSON, content_JSON;
         Json::Reader reader;
 
-        reader.parse(notice.getValueOfContent(), content_JSON);
+        reader.parse(unescape_html(notice.getValueOfContent()), content_JSON);
 
         follow_JSON["type"] = TOPIC_FOLLOW;
         follow_JSON["noticeRecord"] = notice.getValueOfCreateTime().toDbStringLocal();;
@@ -195,7 +195,7 @@ void MessageController::get_notices_detail(const HttpRequestPtr& request, std::f
         Json::Value notice_JSON, content_JSON;
         Json::Reader reader;
 
-        reader.parse(notices[i].getValueOfContent(), content_JSON);
+        reader.parse(unescape_html(notices[i].getValueOfContent()), content_JSON);
 
         notice_JSON["type"] = topic;
         notice_JSON["noticeRecord"] = notices[i].getValueOfCreateTime().toDbStringLocal();;
@@ -206,13 +206,9 @@ void MessageController::get_notices_detail(const HttpRequestPtr& request, std::f
         notices_JSON[i] = notice_JSON;
     }
     if (!notices_JSON.empty())
-    {
         data_JSON["data"] = notices_JSON;
-    }
     else
-    {
         data_JSON["data"] = Json::arrayValue;
-    }
     data_JSON["total"] = service::message::find_notice_count(user.getValueOfId(), topic);
 
     vector<int> unread_ids = get_letter_unread_ids(notices);

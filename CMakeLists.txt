@@ -30,8 +30,10 @@ add_executable(${PROJECT_NAME} main.cc)
 # and comment out the following lines
 # 链接curl
 find_package(CURL REQUIRED)
+# 链接rdkafka
+find_package(rdkafka)
 find_package(Drogon CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon CURL::libcurl)
+target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon CURL::libcurl rdkafka)
 
 # ##############################################################################
 
@@ -50,6 +52,7 @@ aux_source_directory(controller CTL_SRC)
 aux_source_directory(filter FILTER_SRC)
 aux_source_directory(util UTIL_SRC)
 aux_source_directory(plugin PLUGIN_SRC)
+aux_source_directory(kafka KAFKA_SRC)
 
 drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
                     ${CMAKE_CURRENT_BINARY_DIR})
@@ -73,7 +76,8 @@ target_sources(${PROJECT_NAME}
                ${CTL_SRC}
                ${FILTER_SRC}
                ${UTIL_SRC}
-               ${PLUGIN_SRC})
+               ${PLUGIN_SRC}
+               ${KAFKA_SRC})
 # ##############################################################################
 # uncomment the following line for dynamically loading views 
 # set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS ON)

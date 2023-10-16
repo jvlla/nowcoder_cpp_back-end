@@ -6,6 +6,7 @@
 #include <jsoncpp/json/json.h>
 #include <drogon/drogon.h>
 
+// drogon线程到user_id映射map
 extern std::unordered_map<int, int> drogon_thread_to_user_id;
 
 /*
@@ -49,6 +50,13 @@ std::string avatar_file_to_url(const std::string &filename);
  * @return 转义后的内容
  */
 std::string escape_html(const std::string &raw);
+
+/*
+ * 将<>"&进行html反转义，恢复正常html内容
+ * @param raw 原始内容
+ * @return 转义后的内容
+ */
+std::string unescape_html(const std::string &raw);
 
 /*
  * 获得小写的md5散列值

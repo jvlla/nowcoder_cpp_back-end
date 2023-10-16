@@ -4,6 +4,7 @@
 #include "../service/UserService.h"
 #include "../service/LikeService.h"
 #include "../service/FollowService.h"
+#include "../service/MessageService.h"
 #include "../dao/UserDAO.h"
 #include "../model/User.h"
 #include "../util/CommnityUtil.h"
@@ -24,6 +25,10 @@ void UserController::get_user(const HttpRequestPtr &req, std::function<void (con
         user_JSON["userId"] = user_id;
         user_JSON["username"] = user.getValueOfUsername();
         user_JSON["userHeaderURL"] = avatar_file_to_url(user.getValueOfHeaderUrl());
+        user_JSON["infoCount"] = service::message::find_letter_unread_count(user_id, "")
+            + service::message::find_notice_unread_count(user_id, "");
+        printf("--------%d %d\n", service::message::find_letter_unread_count(user_id, "")
+            , service::message::find_notice_unread_count(user_id, ""));
         data_JSON["user"] = user_JSON;
         response = HttpResponse::newHttpJsonResponse(getAPIJSON(true, "已登录", data_JSON));
     }

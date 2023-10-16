@@ -13,6 +13,7 @@ using namespace drogon;
 using namespace drogon::nosql;
 using namespace drogon_model::nowcoder;
 
+// 1.优先从缓存中取值
 User get_cache(int user_id);
 // 2.取不到时初始化缓存数据
 User init_cache(int user_id);
@@ -168,7 +169,8 @@ int update_header(int user_id, std::string header_url)
 }
 
 // 1.优先从缓存中取值
-User get_cache(int user_id) {
+User get_cache(int user_id)
+{
     RedisClientPtr redis_client = app().getRedisClient();
     string user_key = get_user_key(user_id);
     string user_json_str;
@@ -185,10 +187,12 @@ User get_cache(int user_id) {
             "GET " + user_key
         );
     } catch (const exception &e) { LOG_ERROR << "error when get_cache()" << e.what(); }
+    
+    // 从redis内容中base64解码得到user信息
     user_json_str = utils::base64Decode(user_json_str);
-
     try 
     {
+        // 解析user信息到user对象
         Json::Value user_json;
         Json::Reader reader;
         reader.parse(user_json_str, user_json);
@@ -200,7 +204,8 @@ User get_cache(int user_id) {
 }
 
 // 2.取不到时初始化缓存数据
-User init_cache(int user_id) {
+User init_cache(int user_id) 
+{
     RedisClientPtr redis_client = app().getRedisClient();
     User user = dao::user::select_by_id(user_id);
     string user_key = get_user_key(user_id);
@@ -217,7 +222,8 @@ User init_cache(int user_id) {
 }
 
 // 3.数据变更时清除缓存数据
-void clear_cache(int user_id) {
+void clear_cache(int user_id) 
+{
     RedisClientPtr redis_client = app().getRedisClient();
     string user_key = get_user_key(user_id);
 

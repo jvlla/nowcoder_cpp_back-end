@@ -36,3 +36,6 @@ const std::string TOPIC_COMMENT = "comment";
 const std::string TOPIC_LIKE = "like";
 // 主题: 关注
 const std::string TOPIC_FOLLOW = "follow";
+
+// 系统用户id
+const int SYSTEM_USER_ID = 1;

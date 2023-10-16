@@ -9,7 +9,9 @@ struct AddCommentData{
     std::string content;
     int entity_type;
     int entity_id;
+    int entity_user_id;
     int target_id;
+    int post_id;
 };
 }
 
@@ -24,7 +26,9 @@ template<> inline api_data::comment::AddCommentData fromRequest(const HttpReques
         data.content = (*json)["content"].asString();
         data.entity_type = (*json)["entityType"].asInt();
         data.entity_id = (*json)["entityId"].asInt();
+        data.entity_user_id = (*json)["entityUserId"].asInt();
         data.target_id = (*json)["targetId"].asInt();
+        data.post_id = (*json)["postId"].asInt();
     }
         
     return data;

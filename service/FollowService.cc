@@ -58,7 +58,6 @@ void unfollow(int user_id, int entity_type, int entity_id) {
     });
 }
 
-// 查询关注的实体的数量
 int find_followee_count(int user_id, int entity_type) {
     RedisClientPtr redis_client = app().getRedisClient();
     string followee_key = get_followee_key(user_id, entity_type);
@@ -80,7 +79,6 @@ int find_followee_count(int user_id, int entity_type) {
     return ret;
 }
 
-// 查询实体的粉丝的数量
 int find_follower_count(int entity_type, int entity_id) {
     RedisClientPtr redis_client = app().getRedisClient();
     string follower_key = get_follower_key(entity_type, entity_id);
@@ -102,7 +100,6 @@ int find_follower_count(int entity_type, int entity_id) {
     return ret;
 }
 
-// 查询当前用户是否已关注该实体
 bool has_followed(int user_id, int entity_type, int entity_id) {
     RedisClientPtr redis_client = app().getRedisClient();
     string followee_key = get_followee_key(user_id, entity_type);
@@ -124,7 +121,6 @@ bool has_followed(int user_id, int entity_type, int entity_id) {
     return ret != "";
 }
 
-// 查询某用户关注的人
 vector<pair<User, long long>> find_followees(int user_id, int offset, int limit) {
     RedisClientPtr redis_client = app().getRedisClient();
     string followee_key = get_followee_key(user_id, ENTITY_TYPE_USER);
@@ -149,6 +145,7 @@ vector<pair<User, long long>> find_followees(int user_id, int offset, int limit)
         );
     } catch (const exception &e) { LOG_ERROR << "error when has_followed()" << e.what(); }
 
+    // 再通过id到数据库去详细用户信息，到redis去关注时间
     for (int id: ids)
     {
         User user = service::user::find_user_by_id(id);
@@ -171,7 +168,6 @@ vector<pair<User, long long>> find_followees(int user_id, int offset, int limit)
     return ret;
 }
 
-// 查询某用户的粉丝
 vector<pair<User, long long>> find_followers(int user_id, int offset, int limit) {
     RedisClientPtr redis_client = app().getRedisClient();
     string follower_key = get_follower_key(ENTITY_TYPE_USER, user_id);

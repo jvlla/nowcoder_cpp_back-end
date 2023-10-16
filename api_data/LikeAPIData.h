@@ -9,6 +9,7 @@ struct LikeData{
     int entity_type;
     int entity_id;
     int entity_user_id;
+    int post_id;
 };
 }
 
@@ -23,6 +24,7 @@ template<> inline api_data::like::LikeData fromRequest(const HttpRequest &req)
         data.entity_type = (*json)["entityType"].asInt();
         data.entity_id = (*json)["entityId"].asInt();
         data.entity_user_id = (*json)["entityUserId"].asInt();
+        data.post_id = (*json)["postId"].asInt();
     }
         
     return data;

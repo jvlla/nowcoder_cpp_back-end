@@ -3,6 +3,8 @@ using namespace std;
 
 std::unordered_map<int, int> drogon_thread_to_user_id;
 
+string replace(const string& base, string src, string dst);  // 替换字符串辅助函数
+
 Json::Value getAPIJSON(bool success, std::string message, Json::Value &data)
 {
     Json::Value ret;
@@ -38,7 +40,8 @@ std::string avatar_file_to_url(const std::string &filename)
     return "http://" + drogon::app().getListeners()[0].toIpPort() + "/avatar/" + filename;
 }
 
-string escape_html(const string &raw) {
+string escape_html(const string &raw) 
+{
     string result = "";
     for (char c : raw) {
         switch (c) {
@@ -58,6 +61,30 @@ string escape_html(const string &raw) {
                 result += c;
                 break;
         }
+    }
+    return result;
+}
+
+string unescape_html(const string &raw)
+{
+    string result = raw;
+    result = replace(result, "&lt;", "<");
+    result = replace(result, "&gt;", ">");
+    result = replace(result, "&quot;", "\"");
+    result = replace(result, "&amp;", "&");
+    
+    return result;
+}
+
+string replace(const string& base, string src, string dst)
+{
+    int pos = 0, srclen = src.size(), dstlen = dst.size();
+    string result = base;
+
+    while ((pos = result.find(src, pos)) != string::npos)
+    {
+        result.replace(pos, srclen, dst);
+        pos += dstlen;
     }
     return result;
 }

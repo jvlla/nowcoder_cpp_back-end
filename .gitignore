@@ -2,17 +2,17 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=intellij+all,visualstudio,visualstudiocode,cmake,c,c++
 
 # 不提交build文件夹内容，并保留log和avatar文件夹
-!build
-build/*
-!build/.gitkeep
-
-!build/log
-build/log/*
-!build/log/.gitkeep
-
-!buidl/avatar
+build/CMakeFiles
+build/test
+build/uploads
+build/cmake_install.cmake
+build/CMakeCache.txt
+build/Makefile
+build/nowcoder_back-end
 build/avatar/*
 !build/avatar/.gitkeep
+build/log/*
+!build/log/.gitkeep
 
 ### C ###
 # Prerequisites

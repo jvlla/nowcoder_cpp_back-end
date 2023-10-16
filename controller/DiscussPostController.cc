@@ -33,7 +33,7 @@ void DiscussPostController::get_discuss_posts(const HttpRequestPtr& request
         post_JSON["content"] = posts[i].getValueOfContent();
         post_JSON["postRecord"] = posts[i].getValueOfCreateTime().toDbStringLocal();
         post_JSON["commentCount"] = posts[i].getValueOfCommentCount();
-        post_JSON["likeCount"] = i;  // 点赞用redis,之后再搞
+        post_JSON["likeCount"] = service::like::find_entity_like_count(ENTITY_TYPE_POST, posts[i].getValueOfId());
 
         posts_JSON[i] = post_JSON;
     }

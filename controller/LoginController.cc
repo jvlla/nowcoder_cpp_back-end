@@ -7,9 +7,11 @@
 #include "../model/User.h"
 #include "../model/LoginTicket.h"
 #include "../util/CommnityUtil.h"
+#include "../util/RedisKeyUtil.h"
 #include "../plugin/SMTPMail.h"
 using namespace std;
 using namespace drogon_model::nowcoder;
+using namespace drogon::nosql;
 using namespace trantor;
 
 /*
@@ -27,8 +29,25 @@ void LoginController::login(const HttpRequestPtr &req, std::function<void (const
     HttpResponsePtr response;
 
     // 检查人机验证
-    LoginTicket captcha_ticket = service::login_ticket::find_login_ticket_by_ticket(captcha_cookie);
-    if (captcha_ticket.getValueOfId() == 0 || captcha_ticket.getValueOfExpired() < trantor::Date::now()) {
+    // LoginTicket captcha_ticket = service::login_ticket::find_login_ticket_by_ticket(captcha_cookie);
+    RedisClientPtr redis_client = app().getRedisClient();
+    string redis_key = get_kaptcha_key(captcha_cookie);
+    string ticket = "";
+    
+    try {
+        ticket = redis_client->execCommandSync<string>(
+            [](const RedisResult &r){
+                if (r.type() != RedisResultType::kNil)
+                    return r.asString();
+                else
+                    return string();
+            },
+            "GET " + redis_key + " %s", captcha_cookie
+        );
+    } catch (const exception &e) { LOG_ERROR << "error when SADD kaptcha " << e.what(); }
+    // if (captcha_ticket.getValueOfId() == 0 || captcha_ticket.getValueOfExpired() < trantor::Date::now()) {
+    if (ticket != "")
+    {
         response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, "请进行人机验证（可能需要刷新页面）"));
         callback(response);
         return;
@@ -41,7 +60,7 @@ void LoginController::login(const HttpRequestPtr &req, std::function<void (const
         // 根据是否选择记住我设置登录过期时间和是否要延长（通过设置可以延长时间大于过期时间）
         int expired_seconds = post_data.remember ? REMEMBER_EXPIRED_SECONDS : DEFAULT_EXPIRED_SECONDS;
         int extend_seconds = post_data.remember ? expired_seconds * 0.8 : expired_seconds + 1;
-
+        
         // 生成jwt cookie
         string token = jwt::create()
             .set_subject(to_string(user.getValueOfId()))
@@ -73,12 +92,26 @@ void LoginController::verifyCaptcha(const HttpRequestPtr &req, std::function<voi
         if (google_result.get("success", false).asBool() == true)
         {
             string captcha_ticket = drogon::utils::getUuid();
-            // 写入数据库，不填全了，先凑合，因为之后要改redis
-            LoginTicket captcha_database;
-            captcha_database.setUserId(0);
-            captcha_database.setTicket(captcha_ticket);
-            captcha_database.setExpired(Date::now().after(CAPTCHA_EXPIRED_SECONDS));
-            service::login_ticket::add_login_ticket(captcha_database);
+            // // 写入数据库，不填全了，先凑合，因为之后要改redis
+            // LoginTicket captcha_database;
+            // captcha_database.setUserId(0);
+            // captcha_database.setTicket(captcha_ticket);
+            // captcha_database.setExpired(Date::now().after(CAPTCHA_EXPIRED_SECONDS));
+            // service::login_ticket::add_login_ticket(captcha_database);
+            RedisClientPtr redis_client = app().getRedisClient();
+            string redis_key = get_kaptcha_key(captcha_ticket);
+
+            try {
+                redis_client->execCommandSync<string>(
+                    [](const RedisResult &r){
+                        if (r.type() != RedisResultType::kNil)
+                            return r.asString();
+                        else
+                            return to_string(0);
+                    },
+                    "SET " + redis_key + " 1 EX 60"
+                );
+            } catch (const exception &e) { LOG_ERROR << "error when SADD kaptcha " << e.what(); }
 
             response = HttpResponse::newCustomHttpResponse(getAPIJSON(true
                 , "谷歌reCAPTCHA验证通过，challenge_ts: " + google_result.get("challenge_ts", "").toStyledString()));
