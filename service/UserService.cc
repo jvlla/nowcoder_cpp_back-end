@@ -125,15 +125,15 @@ bool enroll(std::string username, std::string password, std::string email, std::
 
     auto *smtpmailPtr = app().getPlugin<SMTPMail>();
     auto id = smtpmailPtr->sendEmail(
-        "smtp.126.com",               //The server IP/DNS
-        25,                           //The port
-        "naitoahel@126.com",          //Who send the email
-        email,                        //Send to whom
-        "C++版牛客注册邮件",          //Email Subject/Title
-        content,                      //Content
-        "naitoahel@126.com",          //Login user
-        "SSHPCWJSBYAIKCIX",           //User password
-        true                          //Is HTML content
+        "smtp.126.com",         //The server IP/DNS
+        25,                     //The port
+        "你的邮箱@126.com",     //Who send the email
+        email,                 //Send to whom
+        "C++版牛客注册邮件",    //Email Subject/Title
+        content,               //Content
+        "你的邮箱@126.com",     //Login user
+        "你的授权码",           //User password
+        true                   //Is HTML content
     );
 
     return true;
