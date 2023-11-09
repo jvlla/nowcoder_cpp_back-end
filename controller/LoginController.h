@@ -13,7 +13,7 @@ public:
     METHOD_LIST_BEGIN
     ADD_METHOD_TO(LoginController::enroll, API_PREFIX + "/register", Post);
     ADD_METHOD_TO(LoginController::activation, API_PREFIX + "/activation/{1}/{2}", Get);
-    ADD_METHOD_TO(LoginController::verifyCaptcha, API_PREFIX + "/login/captcha", Post);
+    ADD_METHOD_TO(LoginController::verify_captcha, API_PREFIX + "/login/captcha", Post);
     ADD_METHOD_TO(LoginController::login, API_PREFIX + "/login", Post);
     ADD_METHOD_TO(LoginController::logout, API_PREFIX + "/logout", Get);
     METHOD_LIST_END
@@ -48,7 +48,7 @@ public:
      * }
      * 如果成功，同时设置Cookie，key为nowcoder_captcha
      */
-    void verifyCaptcha(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
+    void verify_captcha(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
         , api_data::login::CaptchaData post_data);
     
     /*

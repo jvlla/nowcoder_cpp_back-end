@@ -17,11 +17,6 @@ namespace discuss_post {
 std::vector<drogon_model::nowcoder::DiscussPost> select_discuss_post(int user_id, int offset, int limit);
 
 /*
- * 
- */
-drogon_model::nowcoder::DiscussPost select_discuss_post(int discuss_post_id);
-
-/*
  * select count(id)
  * from discuss_post
  * where status != 2

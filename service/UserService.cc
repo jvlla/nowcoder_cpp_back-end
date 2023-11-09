@@ -1,9 +1,7 @@
 #include "UserService.h"
 #include <drogon/drogon.h>
 #include "../dao/UserDAO.h"
-#include "../dao/LoginTicketDAO.h"
 #include "../model/User.h"
-#include "../model/LoginTicket.h"
 #include "../util/CommunityConstant.h"
 #include "../util/CommnityUtil.h"
 #include "../util/RedisKeyUtil.h"

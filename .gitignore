@@ -3,11 +3,8 @@
 
 # 不提交build文件夹内容，并保留log和avatar文件夹和default.Avatar.jpg文件
 build/*
-!build/log
 !build/avatar
-build/log/*
 build/avatar/*
-!build/log/.gitkeep
 !build/avatar/defaultAvatar.jpg
 
 ### C ###

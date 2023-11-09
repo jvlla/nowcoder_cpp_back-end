@@ -26,9 +26,6 @@ vector<DiscussPost> select_discuss_post(int user_id, int offset, int limit)
     try
     {
         vector<DiscussPost> posts = select_future.get();
-        for (int i = 0; i < posts.size(); ++i) {
-            cout << posts[i].getValueOfId() << " " << posts[i].getValueOfTitle() << endl;
-        }
         return posts;
     }
     catch(const DrogonDbException &e)
@@ -36,23 +33,6 @@ vector<DiscussPost> select_discuss_post(int user_id, int offset, int limit)
         LOG_ERROR << "error when call dao::find_discuss_post(" << user_id << ", " << offset << ", " << limit << "): "
             << e.base().what();
         return {};
-    }
-}
-
-drogon_model::nowcoder::DiscussPost select_discuss_post(int discuss_post_id)
-{
-    Mapper<DiscussPost> mapper = get_discuss_post_mapper();
-    future<DiscussPost> select_future = mapper.findFutureByPrimaryKey(discuss_post_id);
-
-    try
-    {
-        DiscussPost post = select_future.get();
-        return post;
-    }
-    catch(const DrogonDbException &e)
-    {
-        LOG_ERROR << "error when call dao::select_discuss_post(" << discuss_post_id << "): " << e.base().what();
-        return DiscussPost();
     }
 }
 

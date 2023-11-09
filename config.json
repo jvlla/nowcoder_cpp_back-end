@@ -211,7 +211,7 @@
         //log: Set log output, drogon output logs to stdout by default
         "log": {
             //log_path: Log file path,empty by default,in which case,logs are output to the stdout
-            // "log_path": "./log/",  // 先注释了，回头上线了记得改
+            "log_path": "./log/",
             //logfile_base_name: Log file base name,empty by default which means drogon names logfile as
             //drogon.log ...
             "logfile_base_name": "",

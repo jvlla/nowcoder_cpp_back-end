@@ -3,9 +3,7 @@
 #include <jwt-cpp/jwt.h>
 #include <trantor/utils/Logger.h>
 #include "../service/UserService.h"
-#include "../service/LoginTicketService.h"
 #include "../model/User.h"
-#include "../model/LoginTicket.h"
 #include "../util/CommnityUtil.h"
 #include "../util/RedisKeyUtil.h"
 #include "../plugin/SMTPMail.h"
@@ -42,11 +40,11 @@ void LoginController::login(const HttpRequestPtr &req, std::function<void (const
                 else
                     return string();
             },
-            "GET " + redis_key + " %s", captcha_cookie
+            "GET " + redis_key
         );
-    } catch (const exception &e) { LOG_ERROR << "error when SADD kaptcha " << e.what(); }
+    } catch (const exception &e) { LOG_ERROR << "error when GET kaptcha " << e.what(); }
     // if (captcha_ticket.getValueOfId() == 0 || captcha_ticket.getValueOfExpired() < trantor::Date::now()) {
-    if (ticket != "")
+    if (ticket == "")
     {
         response = HttpResponse::newHttpJsonResponse(getAPIJSON(false, "请进行人机验证（可能需要刷新页面）"));
         callback(response);
@@ -80,7 +78,7 @@ void LoginController::login(const HttpRequestPtr &req, std::function<void (const
     callback(response);
 }
 
-void LoginController::verifyCaptcha(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
+void LoginController::verify_captcha(const HttpRequestPtr &req, std::function<void (const HttpResponsePtr &)> &&callback
     , api_data::login::CaptchaData post_data)
 {
     Json::Value google_result;
@@ -111,7 +109,7 @@ void LoginController::verifyCaptcha(const HttpRequestPtr &req, std::function<voi
                     },
                     "SET " + redis_key + " 1 EX 60"
                 );
-            } catch (const exception &e) { LOG_ERROR << "error when SADD kaptcha " << e.what(); }
+            } catch (const exception &e) { LOG_ERROR << "error when SET kaptcha " << e.what(); }
 
             response = HttpResponse::newCustomHttpResponse(getAPIJSON(true
                 , "谷歌reCAPTCHA验证通过，challenge_ts: " + google_result.get("challenge_ts", "").toStyledString()));
